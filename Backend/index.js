@@ -3,6 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const dns = require("dns");
+const path = require('path');
 
 dns.setServers(["1.1.1.1","8.8.8.8"])
 dotenv.config();
@@ -30,10 +31,10 @@ app.use('/api/products', require('./routes/productRoutes'));
 
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../Frontend/build')));
+  app.use(express.static(path.join(__dirname, '../Frontend/dist')));
   
   app.use((req, res) => {
-    res.sendFile(path.resolve(__dirname, '../Frontend/build/index.html'));
+    res.sendFile(path.resolve(__dirname, '../Frontend/dist/index.html'));
   });
 } else {
   app.get('/', (req, res) => {
