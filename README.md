@@ -27,7 +27,7 @@
 * 📍 **Order Tracking** – Track order status and purchase history.
 * 👤 **Profile Management** – Update and manage user profile information.
 * 🛠️ **Admin Dashboard** – Manage products, orders, and platform activities.
-* ⚡ **Fast & Responsive** – Optimized with React, Redux Toolkit, and Tailwind CSS.
+* ⚡ **Fast & Responsive** – Optimized with React, Redux Toolkit.
 
 
 ---
@@ -66,12 +66,15 @@
 
 ## Order Success
 
-![Order Success](screenshots/order-success.png)
+
+<img width="1784" height="877" alt="order successfull" src="https://github.com/user-attachments/assets/3ea5d688-73c7-4025-afd4-59d15faaae40" />
+
 
 
 ## Profile Page
 
-![Profile](screenshots/profile.png)
+
+<img width="1776" height="837" alt="profile" src="https://github.com/user-attachments/assets/9b0677ab-7fc2-4fd0-9aa9-6fbf56b90763" />
 
 
 
@@ -84,28 +87,49 @@
 
 # 🏗️ Architecture
 
-```text
-User
- │
- ▼
-React Frontend
- │
- ▼
-Express REST API
- │
- ├── Authentication (JWT)
- ├── Products
- ├── Orders
- ├── Users
- │
- ▼
-MongoDB Database
+The system architecture is built to ensure **performance, scalability, and modularity**. It follows a **client-server model** with separate frontend and backend responsibilities:
 
-Additional Services:
- ├── Cloudinary
- └── Razorpay
+- **Frontend (React + Redux Toolkit):** Handles product browsing, state management, cart operations.
+- **Backend (Node.js + Express.js):** Provides REST APIs for authentication, users, products, carts, and orders.
+- **Database (MongoDB Atlas + Mongoose):** Stores user accounts, products, orders, OTPs, and transaction records.
+- **Authentication (JWT + OTP Verification):** Secure login, registration, email verification, and protected routes.
+- **Cloud Storage (Cloudinary):** Manages product image uploads and storage.
+- **Payments (Razorpay):** Enables secure online payment processing and order confirmation.
+
+
+```mermaid
+graph TD
+    %% CLIENT
+    subgraph Client
+    U[🛍️ User] --> F[💻 React Frontend]
+    end
+
+    %% BACKEND
+    subgraph Backend
+    F --> API[⚙️ Express API]
+    API --> DB[(🗄️ MongoDB Atlas)]
+    API --> Pay[💳 Razorpay]
+    end
+
+    %% FLOWS
+    U -->|🔑 Login / Signup| API
+    U -->|🛒 Browse & Add to Cart| F
+    U -->|💰 Checkout & Pay| Pay
+    Pay -->|📜 Payment Status| API
+    API -->|💾 Store / Retrieve Data| DB
+
+    %% STYLING
+    classDef client fill:#6ac6b7,stroke:#000,stroke-width:2px;
+    classDef backend fill:#f1a4cb,stroke:#000,stroke-width:2px;
+    classDef user fill:#ffcc00,stroke:#000,stroke-width:2px;
+    classDef db fill:#f1e1a4,stroke:#000,stroke-width:2px;
+
+    class U user;
+    class F client;
+    class API backend;
+    class DB db;
+    class Pay backend;
 ```
-
 ---
 
 # 📂 Directory Structure
