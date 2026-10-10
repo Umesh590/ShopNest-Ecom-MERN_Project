@@ -5,6 +5,7 @@ const User = require("./models/User");
 const Product = require("./models/Product");
 const connectDB = require("./config/db");
 const dns = require("dns");
+
 dns.setServers(["1.1.1.1", "8.8.8.8"]);
 dotenv.config();
 connectDB();

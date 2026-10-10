@@ -1,32 +1,54 @@
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const sendEmail = require('../utils/sendEmail');
+const User = require("../models/User");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const sendEmail = require("../utils/sendEmail");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+    expiresIn: "30d",
   });
 };
 
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     const userExists = await User.findOne({ email });
-
     if (userExists) {
-      return res.status(400).json({
-        message: 'User already exists',
+      if (userExists.verified) {
+        return res.status(400).json({
+          message: "User already exists",
+        });
+      }
+
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      userExists.otp = otp;
+      userExists.otpExpire = Date.now() + 5 * 60 * 1000;
+
+      await userExists.save();
+
+      const message = `
+    <h2>Welcome to ShopNest, ${userExists.name}!</h2>
+    <p>Your OTP for email verification is:</p>
+    <h1>${otp}</h1>
+    <p>This OTP is valid for 5 minutes.</p>
+  `;
+
+      await sendEmail({
+        email: userExists.email,
+        subject: "ShopNest Email Verification",
+        message,
+      });
+
+      return res.status(200).json({
+        message: "OTP resent successfully",
+        email: userExists.email,
       });
     }
-
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const otp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     const user = await User.create({
       name,
@@ -38,23 +60,22 @@ const registerUser = async (req, res) => {
     });
 
     const message = `
-      <h2>Welcome to ShopNest, ${name}!</h2>
-      <p>Your OTP for email verification is:</p>
-      <h1>${otp}</h1>
-      <p>This OTP is valid for 5 minutes.</p>
-    `;
+  <h2>Welcome to ShopNest, ${name}!</h2>
+  <p>Your OTP for email verification is:</p>
+  <h1>${otp}</h1>
+  <p>This OTP is valid for 5 minutes.</p>
+`;
 
     await sendEmail({
       email: user.email,
-      subject: 'ShopNest Email Verification',
+      subject: "ShopNest Email Verification",
       message,
     });
 
-    res.status(201).json({
-      message: 'OTP sent successfully',
+    return res.status(201).json({
+      message: "OTP sent successfully",
       email: user.email,
     });
-
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -70,19 +91,19 @@ const verifyOTP = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     if (user.otp !== otp) {
       return res.status(400).json({
-        message: 'Invalid OTP'
+        message: "Invalid OTP",
       });
     }
 
     if (user.otpExpire < Date.now()) {
       return res.status(400).json({
-        message: 'OTP expired'
+        message: "OTP expired",
       });
     }
 
@@ -93,12 +114,11 @@ const verifyOTP = async (req, res) => {
     await user.save();
 
     res.status(200).json({
-      message: 'Email verified successfully'
+      message: "Email verified successfully",
     });
-
   } catch (error) {
     res.status(500).json({
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -111,24 +131,22 @@ const loginUser = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        message: 'Invalid email or password',
+        
+        message: "Invalid email or password",
       });
     }
 
     if (!user.verified) {
       return res.status(401).json({
-        message: 'Please verify your email first',
+        message: "Please verify your email first",
       });
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({
-        message: 'Invalid email or password',
+        message: "Invalid email or password",
       });
     }
 
@@ -139,7 +157,6 @@ const loginUser = async (req, res) => {
       role: user.role,
       token: generateToken(user._id),
     });
-
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -149,7 +166,7 @@ const loginUser = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select('-password');
+    const users = await User.find({}).select("-password");
 
     res.json(users);
   } catch (error) {
